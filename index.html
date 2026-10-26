@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CHIHAOBCR VIP v16.0 — Auto Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Pirata+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sea-deep:#04182e;--parchment:#f4e4b8;--straw-gold:#ffcc00;
+  --grand-red:#e63946;--luffy-blue:#0077be;--luffy-blue-light:#4db2ff;--zoro-green:#3cb371;
+  --bg-card:rgba(10, 25, 45, 0.85);--bg-card-strong:rgba(10, 25, 45, 0.95);
+  --text-main:#fff8e7;--text-muted:#a8b8c8;
+  --border-gold:rgba(255,204,0,0.5);--border-sea:rgba(0,180,255,0.3);
+  --radius-xs:5px;--radius-sm:10px;--radius-md:16px;--radius-lg:26px;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+input,button,select,textarea{user-select:text;-webkit-user-select:text;}
+body{
+  font-family:'Rajdhani',sans-serif;background:var(--sea-deep);color:var(--text-main);
+  min-height:100vh;display:flex;justify-content:center;align-items:center;overflow:hidden;
+}
+.bg-overlay {
+  position:fixed;inset:0;z-index:-1;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(255, 204, 0, 0.15), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(230, 57, 70, 0.15), transparent 40%),
+    linear-gradient(180deg, #04182e 0%, #020c1a 100%);
+  pointer-events:none;
+}
+.app-container{
+  width:100%;max-width:480px;height:100vh;max-height:960px;background:var(--bg-card);
+  border:1px solid var(--border-gold);border-radius:var(--radius-md);
+  box-shadow:0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(255,204,0,0.1);
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);z-index:1;
+}
+.app-header{
+  padding:10px 14px;background:rgba(10, 25, 45, 0.9);border-bottom:1px solid var(--border-gold);
+  display:flex;justify-content:space-between;align-items:center;z-index:10;
+}
+.brand-wrapper{display:flex;align-items:center;gap:8px;}
+.brand-icon{
+  width:32px;height:32px;background:var(--straw-gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#000;font-size:16px;
+}
+.brand-title-group h1{
+  font-family:'Pirata One', cursive;font-size:16px;color:#ffcc00;line-height:1;
+}
+.brand-title-group span{font-size:8px;color:var(--text-muted);}
+.status-wrapper{display:flex;align-items:center;gap:6px;}
+.role-pill{font-family:'Bangers', sans-serif;font-size:9px;padding:3px 6px;border-radius:3px;}
+.role-super-badge{background:var(--grand-red);color:#fff;}
+.role-member-badge{background:var(--luffy-blue);color:#fff;}
+.coin-pill{
+  display:flex;align-items:center;gap:4px;background:rgba(255,204,0,0.15);
+  border:1px solid var(--straw-gold);padding:3px 8px;border-radius:12px;
+  font-family:'Bangers', sans-serif;font-size:11px;color:#ffe066;
+}
+.nav-tabbar{display:flex;background:rgba(4,18,32,0.9);border-bottom:1px solid var(--border-sea);}
+.nav-item{
+  flex:1;padding:10px 4px;border:none;background:transparent;color:var(--text-muted);
+  font-family:'Bangers', sans-serif;font-size:11px;cursor:pointer;position:relative;
+}
+.nav-item.active{color:#ffcc00;}
+.nav-item.active::after{
+  content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:#ffcc00;
+}
+.auth-backdrop{
+  position:absolute;inset:0;background:rgba(2,12,26,0.95);z-index:1000;display:flex;
+  justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(10px);
+  transition:opacity 0.3s,visibility 0.3s;
+}
+.auth-box{
+  width:100%;max-width:340px;background:var(--bg-card-strong);border:1px solid var(--border-gold);
+  border-radius:var(--radius-md);padding:24px 20px;
+}
+.auth-heading{text-align:center;margin-bottom:18px;}
+.auth-heading h2{font-family:'Pirata One', cursive;font-size:22px;color:#ffcc00;margin-bottom:4px;}
+.auth-heading p{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-family:'Bangers',sans-serif;}
+.input-group{margin-bottom:10px;}
+.input-group label{display:block;font-size:10px;color:#ffcc00;margin-bottom:4px;font-family:'Bangers',sans-serif;}
+.input-field{
+  width:100%;background:rgba(4,18,32,0.9);border:1px solid var(--border-sea);
+  border-radius:var(--radius-xs);padding:10px 12px;color:var(--text-main);
+  font-family:'Share Tech Mono',monospace;font-size:13px;outline:none;
+}
+.input-field:focus{border-color:#ffcc00;}
+.auth-msg{min-height:18px;font-size:10px;text-align:center;margin-bottom:8px;font-family:'Bangers',sans-serif;}
+.auth-msg.error{color:#ff6b7a;}
+.auth-msg.success{color:#3cb371;}
+.btn-primary{
+  width:100%;padding:12px;border:none;border-radius:var(--radius-xs);
+  background:linear-gradient(135deg, #ffcc00, #e63946);color:#000;
+  font-family:'Bangers', sans-serif;font-size:14px;cursor:pointer;
+}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.viewport-content{flex:1;overflow-y:auto;z-index:5;padding:12px;display:flex;flex-direction:column;gap:12px;}
+.panel-view{display:none;flex-direction:column;gap:12px;width:100%;}
+.panel-view.active{display:flex;}
+.card-container{
+  background:var(--bg-card-strong);border:1px solid var(--border-sea);
+  border-radius:var(--radius-sm);padding:12px;
+}
+.card-header-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,204,0,0.1);gap:6px;
+}
+.card-label-title{font-size:10px;color:#ffcc00;font-family:'Bangers',sans-serif;}
+.prediction-box-main{
+  text-align:center;padding:16px 0;background:rgba(4,18,32,0.8);
+  border-radius:var(--radius-xs);margin-bottom:8px;
+}
+.prediction-output-text{
+  font-family:'Bangers', sans-serif;font-size:32px;letter-spacing:2px;
+  min-height:40px;display:flex;align-items:center;justify-content:center;
+}
+.val-player{color:#4db2ff;}
+.val-banker{color:#ff6b7a;}
+.val-standby{color:#ffcc00;font-size:12px;font-family:'Bangers',sans-serif;}
+.prediction-confidence{font-family:'Bangers', sans-serif;font-size:12px;color:#ffcc00;margin-top:4px;}
+.progress-block{display:flex;flex-direction:column;gap:4px;}
+.progress-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);font-family:'Bangers',sans-serif;}
+.progress-track{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;}
+.progress-fill-bar{height:100%;width:0%;background:var(--straw-gold);transition:width 0.05s linear;}
+.action-buttons-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.btn-input-move{
+  padding:14px 0;border:none;border-radius:var(--radius-xs);font-family:'Bangers', sans-serif;
+  font-size:14px;color:#fff;cursor:pointer;
+}
+.btn-input-move:disabled{opacity:0.4;}
+.btn-player-action{background:var(--luffy-blue);}
+.btn-banker-action{background:var(--grand-red);}
+.btn-tie-action{background:var(--zoro-green);}
+.roadmap-container-scroll{display:flex;gap:5px;overflow-x:auto;padding:4px 0;scrollbar-width:none;}
+.roadmap-container-scroll::-webkit-scrollbar{display:none;}
+.road-ball{
+  width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Bangers',sans-serif;font-size:11px;flex-shrink:0;color:#fff;
+}
+.ball-P{background:var(--luffy-blue);}
+.ball-B{background:var(--grand-red);}
+.ball-T{background:var(--zoro-green);}
+
+.sync-status-bar{
+  display:flex;justify-content:space-between;align-items:center;padding:6px 10px;
+  background:rgba(255,204,0,0.1);border:1px solid var(--straw-gold);border-radius:var(--radius-xs);margin-bottom:8px;
+}
+.sync-label{font-size:10px;color:#ffcc00;font-family:'Bangers',sans-serif;}
+.sync-count{font-family:'Bangers',sans-serif;font-size:12px;color:#ffcc00;}
+.sync-count.ready{color:#4dffb3;}
+.sync-slots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px;justify-content:center;}
+.sync-slot{
+  width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Bangers',sans-serif;font-size:10px;background:rgba(255,255,255,0.05);
+  border:1px dashed rgba(255,255,255,0.2);color:var(--text-muted);
+}
+.sync-slot.filled-P{background:var(--luffy-blue);border:none;color:#fff;}
+.sync-slot.filled-B{background:var(--grand-red);border:none;color:#fff;}
+.sync-slot.filled-T{background:var(--zoro-green);border:none;color:#fff;}
+.sync-input-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;}
+.btn-sync{
+  padding:10px 0;border-radius:var(--radius-xs);font-family:'Bangers',sans-serif;font-size:14px;
+  color:#fff;cursor:pointer;border:none;
+}
+.btn-sync.sync-P{background:var(--luffy-blue);}
+.btn-sync.sync-B{background:var(--grand-red);}
+.btn-sync.sync-T{background:var(--zoro-green);}
+.btn-sync.sync-undo{background:#555;}
+
+.gallery-container {display: flex; gap: 8px; overflow-x: auto; padding: 2px 0; scrollbar-width: none;}
+.gallery-container::-webkit-scrollbar {display: none;}
+.gallery-img {
+  width: 110px; height: 150px; flex-shrink: 0;
+  border-radius: var(--radius-xs); border: 1px solid var(--straw-gold);
+  object-fit: cover;
+}
+
+/* 9 AI Grid - Compact */
+.layers-grid-9{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px;}
+.layer-card{
+  background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--radius-xs);padding:6px 2px;text-align:center;
+}
+.layer-card.active-now{border-color:#ffcc00;}
+.layer-card.bait{border-color:var(--grand-red);background:rgba(230,57,70,0.15);}
+.layer-name{font-size:8px;color:#ffcc00;font-family:'Bangers',sans-serif;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.layer-value{font-family:'Bangers',sans-serif;font-size:14px;}
+.layer-value.P{color:#4db2ff;}
+.layer-value.B{color:#ff6b7a;}
+.layer-value.none{color:var(--text-muted);}
+.layer-reason{font-size:7px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}
+.stat-card-box{background:rgba(4,18,32,0.8);border-radius:var(--radius-xs);padding:8px 4px;text-align:center;}
+.stat-val-num{font-family:'Bangers',sans-serif;font-size:16px;}
+.val-win{color:#4dffb3;}.val-loss{color:#ff6b7a;}.val-rate{color:#ffcc00;}
+.stat-desc-lbl{font-size:8px;color:var(--text-muted);font-family:'Bangers',sans-serif;}
+.history-list-scroll{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;}
+.history-row-item{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:6px 8px;border-radius:var(--radius-xs);font-size:10px;}
+.history-round-tag{font-family:'Bangers',sans-serif;color:#ffcc00;}
+.history-info-detail{flex:1;text-align:center;}
+.history-verdict-badge{padding:2px 6px;border-radius:3px;font-family:'Bangers',sans-serif;font-size:9px;}
+.verdict-correct{background:rgba(77,255,179,0.2);color:#4dffb3;}
+.verdict-incorrect{background:rgba(255,107,122,0.2);color:#ff6b7a;}
+.admin-controls-flex{display:flex;flex-direction:column;gap:8px;}
+.btn-secondary-action{background:var(--luffy-blue);border:none;color:#fff;padding:10px;border-radius:var(--radius-xs);font-family:'Bangers',sans-serif;font-size:11px;cursor:pointer;}
+.btn-danger-action{background:var(--grand-red);border:none;color:#fff;padding:8px 10px;border-radius:var(--radius-xs);font-family:'Bangers',sans-serif;font-size:10px;cursor:pointer;}
+.terminal-logs-box{background:rgba(0,0,0,0.5);border-radius:var(--radius-xs);padding:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#4dffb3;height:100px;overflow-y:auto;}
+.toast-notification{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:rgba(15,35,60,0.95);border:1px solid #ffcc00;color:#fff;
+  padding:10px 16px;border-radius:16px;font-size:11px;font-weight:700;z-index:2000;pointer-events:none;
+  transition:transform 0.3s;
+}
+.toast-notification.active{transform:translateX(-50%) translateY(0);}
+
+/* Admin inner tabs */
+.admin-inner-tabs{display:flex;gap:6px;margin-bottom:10px;}
+.admin-inner-tab{flex:1;padding:8px;border-radius:var(--radius-xs);cursor:pointer;background:rgba(0,0,0,0.3);border:1px solid var(--border-sea);color:var(--text-muted);font-family:'Bangers',sans-serif;font-size:10px;}
+.admin-inner-tab.active{background:rgba(255,204,0,0.15);border-color:#ffcc00;color:#ffcc00;}
+.admin-inner-panel{display:none;}
+.admin-inner-panel.active{display:block;}
+.vault-list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;}
+.vault-account-card{background:rgba(0,0,0,0.3);padding:8px;border-radius:var(--radius-xs);font-size:11px;}
+.vault-account-top{display:flex;justify-content:space-between;margin-bottom:4px;}
+.vault-account-name{font-family:'Bangers',sans-serif;color:#ffcc00;}
+.vault-account-meta{font-size:9px;color:var(--text-muted);margin-bottom:6px;}
+.vault-account-actions{display:flex;gap:4px;}
+.vault-mini-btn{flex:1;padding:5px;border-radius:3px;font-family:'Bangers',sans-serif;font-size:9px;cursor:pointer;border:none;}
+.vault-mini-btn.gold{background:#b38000;color:#fff;}
+.vault-mini-btn.danger{background:var(--grand-red);color:#fff;}
+.sandbox-badge{font-size:7px;padding:2px 5px;border-radius:3px;background:rgba(255,204,0,0.2);color:#ffcc00;margin-left:4px;}
+.sound-toggle{position:absolute;top:12px;right:120px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.5);border:1px solid #ffcc00;color:#ffcc00;font-size:12px;cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center;}
+.sound-toggle.off{opacity:0.4;color:var(--text-muted);border-color:var(--text-muted);}
+</style>
+</head>
+<body>
+
+<div class="bg-overlay"></div>
+
+<div class="app-container">
+  <div class="watermark-bg" style="position:absolute;top:45%;left:50%;transform:translate(-50%,-50%) rotate(-25deg);font-family:'Pirata One', cursive;font-size:64px;color:rgba(255,204,0,0.03);pointer-events:none;letter-spacing:8px;white-space:nowrap;z-index:0;">CHIHAOBCR</div>
+  <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Bật/tắt âm thanh">🔊</button>
+
+  <!-- LOGIN -->
+  <div class="auth-backdrop" id="authOverlay">
+    <div class="auth-box">
+      <div class="auth-heading">
+        <h2>CHIHAOBCR VIP</h2>
+        <p>Grand Line · 9-AI Trap Detector</p>
+      </div>
+      <div class="input-group">
+        <label>Tài Khoản</label>
+        <input type="text" id="loginUsername" class="input-field" placeholder="Nhập tài khoản...">
+      </div>
+      <div class="input-group">
+        <label>Mật Khẩu Cấp 1</label>
+        <input type="password" id="loginPass1" class="input-field" placeholder="Mật khẩu cấp 1...">
+      </div>
+      <div class="input-group">
+        <label>Mật Khẩu Cấp 2</label>
+        <input type="password" id="loginPass2" class="input-field" placeholder="Mật khẩu cấp 2...">
+      </div>
+      <div class="auth-msg" id="authFeedbackMsg"></div>
+      <button class="btn-primary" id="btnLogin" onclick="processLoginAuthentication()">⚓ XÁC THỰC ⚓</button>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon">☠</div>
+      <div class="brand-title-group">
+        <h1>CHIHAOBCR</h1>
+        <span>Grand Line · v16.0</span>
+      </div>
+    </div>
+    <div class="status-wrapper">
+      <span id="userRoleBadge" class="role-pill role-member-badge">GUEST</span>
+      <div class="coin-pill">
+        <span>🪙</span>
+        <span id="userCoinCounter">0</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav-tabbar">
+    <button class="nav-item active" onclick="switchAppTab('gamePanel', this)">⚓ BÀN CHƠI</button>
+    <button class="nav-item" onclick="switchAppTab('historyPanel', this)">🏴‍☠️ LỊCH SỬ</button>
+    <button class="nav-item" onclick="switchAppTab('adminPanel', this)">⚙️ ADMIN</button>
+  </nav>
+
+  <div class="viewport-content">
+    <!-- GAME -->
+    <div class="panel-view active" id="gamePanel">
+      
+      <!-- KHUNG ẢNH GALLERY -->
+      <div class="card-container">
+        <div class="gallery-container">
+          <img src="https://i.pinimg.com/736x/24/f2/1d/24f21df884b18e3d18b8b93b8f21e570.jpg" class="gallery-img" alt="Nami">
+          <img src="https://i.pinimg.com/736x/b2/7d/d8/b27dd84c1496f8328a48310f6b4a77a7.jpg" class="gallery-img" alt="Robin">
+          <img src="https://i.pinimg.com/736x/3f/0e/4c/3f0e4c5b5d3f3a3f3f3f3f3f3f3f3f.jpg" class="gallery-img" alt="Nami 2">
+        </div>
+      </div>
+
+      <!-- ĐỒNG BỘ CẦU -->
+      <div class="card-container">
+        <div class="card-header-row">
+          <span class="card-label-title">ĐỒNG BỘ 15 CẦU</span>
+          <button class="btn-danger-action" onclick="resetSyncBoard()" style="font-size:9px;padding:4px 8px;">↺ RESET</button>
+        </div>
+        <div class="sync-status-bar">
+          <span class="sync-label">Đã đồng bộ</span>
+          <span class="sync-count" id="syncCountLabel">0 / 15</span>
+        </div>
+        <div class="sync-slots" id="syncSlotsContainer"></div>
+        <div class="sync-input-row">
+          <button class="btn-sync sync-P" onclick="pushSyncSlot('P')">P</button>
+          <button class="btn-sync sync-B" onclick="pushSyncSlot('B')">B</button>
+          <button class="btn-sync sync-T" onclick="pushSyncSlot('T')">T</button>
+          <button class="btn-sync sync-undo" onclick="popSyncSlot()">↶</button>
+        </div>
+      </div>
+
+      <!-- DỰ ĐOÁN 9 AI -->
+      <div class="card-container">
+        <div class="card-header-row">
+          <span class="card-label-title">HỘI ĐỒNG 9 TẦNG AI</span>
+        </div>
+        <div class="prediction-box-main">
+          <div class="prediction-output-text val-standby" id="predictionOutputDisplay">CHƯA ĐỒNG BỘ ĐỦ 15 CẦU</div>
+          <div class="prediction-confidence" id="predictionConfidenceLabel">—</div>
+        </div>
+        <div class="layers-grid-9" id="layersGridContainer">
+          <div class="layer-card"><div class="layer-name">BỆT</div><div class="layer-value none" id="layer1Value">—</div><div class="layer-reason" id="layer1Reason">—</div></div>
+          <div class="layer-card"><div class="layer-name">MARKOV 2</div><div class="layer-value none" id="layer2Value">—</div><div class="layer-reason" id="layer2Reason">—</div></div>
+          <div class="layer-card"><div class="layer-name">MARKOV 3</div><div class="layer-value none" id="layer3Value">—</div><div class="layer-reason" id="layer3Reason">—</div></div>
+          <div class="layer-card"><div class="layer-name">LSTM</div><div class="layer-value none" id="layer4Value">—</div><div class="layer-reason" id="layer4Reason">—</div></div>
+          <div class="layer-card"><div class="layer-name">HỌC MÁY</div><div class="layer-value none" id="layer5Value">—</div><div class="layer-reason" id="layer5Reason">—</div></div>
+          <div class="layer-card"><div class="layer-name">BẺ CẦU</div><div class="layer-value none" id="layer6Value">—</div><div class="layer-reason" id="layer6Reason">—</div></div>
+          <div class="layer-card bait"><div class="layer-name" style="color:#ff6b7a;">BẮT SEXY 1</div><div class="layer-value none" id="layer7Value">—</div><div class="layer-reason" id="layer7Reason">—</div></div>
+          <div class="layer-card bait"><div class="layer-name" style="color:#ff6b7a;">BẮT SEXY 2</div><div class="layer-value none" id="layer8Value">—</div><div class="layer-reason" id="layer8Reason">—</div></div>
+          <div class="layer-card bait"><div class="layer-name" style="color:#ff6b7a;">BẮT SEXY 3</div><div class="layer-value none" id="layer9Value">—</div><div class="layer-reason" id="layer9Reason">—</div></div>
+        </div>
+        <div class="progress-block" style="margin-top:8px;">
+          <div class="progress-meta"><span>TIẾN TRÌNH NEURAL</span><span id="loadingPercentText">0%</span></div>
+          <div class="progress-track"><div class="progress-fill-bar" id="loadingBarFill"></div></div>
+        </div>
+        <button class="btn-primary" id="btnRunPrediction" onclick="runPrediction()" style="margin-top:8px;" disabled>⚔ CHẠY DỰ ĐOÁN ⚔</button>
+      </div>
+
+      <!-- NHẬP KẾT QUẢ -->
+      <div class="card-container">
+        <div class="card-header-row"><span class="card-label-title">NHẬP KẾT QUẢ THỰC TẾ (TRỪ 2 🪙)</span></div>
+        <div class="action-buttons-grid">
+          <button class="btn-input-move btn-player-action" onclick="registerRoundResult('P')">PLAYER</button>
+          <button class="btn-input-move btn-banker-action" onclick="registerRoundResult('B')">BANKER</button>
+          <button class="btn-input-move btn-tie-action" onclick="registerRoundResult('T')">TIE</button>
+        </div>
+      </div>
+
+      <!-- BẢNG CẦU -->
+      <div class="card-container">
+        <div class="card-header-row"><span class="card-label-title">BẢNG CẦU</span></div>
+        <div class="roadmap-container-scroll" id="roadmapBallsContainer"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="panel-view" id="historyPanel">
+      <div class="card-container">
+        <div class="card-header-row"><span class="card-label-title">THỐNG KÊ HIỆU SUẤT</span></div>
+        <div class="stats-grid-3">
+          <div class="stat-card-box"><div class="stat-val-num val-win" id="statWinsCount">0</div><div class="stat-desc-lbl">ĐÚNG</div></div>
+          <div class="stat-card-box"><div class="stat-val-num val-loss" id="statLossesCount">0</div><div class="stat-desc-lbl">SAI</div></div>
+          <div class="stat-card-box"><div class="stat-val-num val-rate" id="statAccuracyRate">0%</div><div class="stat-desc-lbl">TỶ LỆ</div></div>
+        </div>
+        <div class="history-list-scroll" id="accuracyHistoryListContainer"></div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="panel-view" id="adminPanel">
+      <div class="admin-inner-tabs">
+        <button class="admin-inner-tab active" onclick="switchAdminInnerTab('vault', this)">🏦 KHO</button>
+        <button class="admin-inner-tab" onclick="switchAdminInnerTab('sandbox', this)">🎮 SANDBOX</button>
+        <button class="admin-inner-tab" onclick="switchAdminInnerTab('sys', this)">🛠 HỆ THỐNG</button>
+      </div>
+      
+      <!-- VAULT -->
+      <div class="admin-inner-panel active" id="adminInnerVault">
+        <div class="card-container">
+          <div class="card-header-row"><span class="card-label-title">TẠO TÀI KHOẢN</span></div>
+          <div class="admin-controls-flex">
+            <div class="input-group"><input type="text" id="vaultNewUsername" class="input-field" placeholder="Username"></div>
+            <div class="input-group"><input type="text" id="vaultNewPass1" class="input-field" placeholder="Pass 1 (≥3)"></div>
+            <div class="input-group"><input type="text" id="vaultNewPass2" class="input-field" placeholder="Pass 2 (tuỳ chọn)"></div>
+            <div class="input-group"><input type="number" id="vaultNewCoins" class="input-field" placeholder="Xu" value="200"></div>
+            <button class="btn-primary" onclick="vaultCreateAccount()">TẠO</button>
+          </div>
+        </div>
+        <div class="card-container">
+          <div class="card-header-row"><span class="card-label-title">DANH SÁCH <span id="vaultCountBadge" style="color:#ffcc00;">(0)</span></span></div>
+          <div class="vault-list" id="vaultAccountList"></div>
+        </div>
+      </div>
+
+      <!-- SANDBOX -->
+      <div class="admin-inner-panel" id="adminInnerSandbox">
+        <div class="card-container">
+          <div class="card-header-row"><span class="card-label-title">SANDBOX<span class="sandbox-badge">TEST</span></span></div>
+          <div class="prediction-box-main"><div class="prediction-output-text val-standby" id="sandboxOutputDisplay">BẤM ĐỂ TEST</div></div>
+        </div>
+        <div class="card-container">
+          <div class="card-header-row"><span class="card-label-title">NHẬP</span></div>
+          <div class="action-buttons-grid">
+            <button class="btn-input-move btn-player-action" onclick="sandboxRound('P')">PLAYER</button>
+            <button class="btn-input-move btn-banker-action" onclick="sandboxRound('B')">BANKER</button>
+            <button class="btn-input-move btn-tie-action" onclick="sandboxRound('T')">TIE</button>
+          </div>
+        </div>
+        <div class="card-container">
+          <div class="card-header-row"><span class="card-label-title">CẦU SANDBOX</span><button class="btn-danger-action" onclick="sandboxReset()">RESET</button></div>
+          <div class="roadmap-container-scroll" id="sandboxBallsContainer"></div>
+        </div>
+      </div>
+
+      <!-- SYS -->
+      <div class="admin-inner-panel" id="adminInnerSys">
+        <div class="card-container">
+          <div class="card-header-row"><span class="card-label-title">QUẢN TRỊ</span></div>
+          <div class="admin-controls-flex">
+            <div class="input-group"><input type="number" id="adminDepositAmount" class="input-field" placeholder="Nhập số xu..."></div>
+            <button class="btn-primary" onclick="adminExecuteDepositCoins()">NẠP XU</button>
+            <div class="admin-row-btns" style="margin-top:6px; display:flex; gap:6px;">
+              <button class="btn-secondary-action" onclick="adminResetRoadmapData()" style="flex:1;">RESET CẦU</button>
+              <button class="btn-secondary-action" onclick="switchAppTab('gamePanel', document.querySelectorAll('.nav-item')[0])" style="flex:1;">⚓ BÀN CHƠI</button>
+            </div>
+          </div>
+          <div class="card-header-row" style="margin-top:10px;"><span class="card-label-title">LOG</span></div>
+          <div class="terminal-logs-box" id="systemTerminalLogs"><div class="log-line">[SYS] v16.0 Auto-Login Ready.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-notification" id="appToastPopup">Thông báo</div>
+</div>
+
+<script>
+"use strict";
+
+// Cố định key cũ để không mất tài khoản
+const ADMIN_ACCOUNT = { username:'lien1984', pass1:'chihao2010', pass2:'168211', coins:999999 };
+const DEFAULT_MEMBER_COINS = 200;
+const ROUND_COST = 2;
+const SYNC_REQUIRED = 15;
+const STORAGE_KEY = 'chihaobcr_state_v14'; // Giữ nguyên key cũ
+const PLAYERS_KEY = 'chihaobcr_players_v14';
+
+const State = {
+  auth: { username:'', role:'GUEST', coins:0 },
+  history: [], syncHistory: [], evaluationHistory: [],
+  activePrediction: null, predictionLayers: null, isEngineBusy: false,
+  sandboxHistory: ['P','B','P','B','P','B'], sandboxBusy: false,
+  players: [], soundOn: true
+};
+
+/* ============ AUDIO ============ */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  return audioCtx;
+}
+function playTone(freq, dur, type, vol) {
+  if (!State.soundOn) return;
+  const ctx = getAudioCtx(); if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.type = type || 'sine'; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(vol || 0.15, ctx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + dur);
+}
+function sfxClick() { playTone(880, 0.06, 'square', 0.08); }
+function sfxPop() { playTone(1200, 0.05, 'sine', 0.1); setTimeout(()=>playTone(1600, 0.04, 'sine', 0.06), 30); }
+function sfxUndo() { playTone(600, 0.08, 'sawtooth', 0.06); }
+function sfxPrediction() { playTone(440, 0.1, 'sine', 0.12); setTimeout(()=>playTone(660, 0.1, 'sine', 0.12), 100); setTimeout(()=>playTone(880, 0.18, 'sine', 0.14), 200); }
+function sfxWin() { playTone(523, 0.1, 'triangle', 0.14); setTimeout(()=>playTone(659, 0.1, 'triangle', 0.14), 90); setTimeout(()=>playTone(784, 0.1, 'triangle', 0.14), 180); setTimeout(()=>playTone(1046, 0.25, 'triangle', 0.16), 270); }
+function sfxLose() { playTone(400, 0.15, 'sawtooth', 0.1); setTimeout(()=>playTone(300, 0.2, 'sawtooth', 0.1), 130); }
+function sfxError() { playTone(200, 0.15, 'square', 0.12); setTimeout(()=>playTone(150, 0.2, 'square', 0.12), 140); }
+function sfxLogin() { playTone(392, 0.1, 'triangle', 0.13); setTimeout(()=>playTone(523, 0.1, 'triangle', 0.13), 100); setTimeout(()=>playTone(659, 0.1, 'triangle', 0.13), 200); setTimeout(()=>playTone(784, 0.2, 'triangle', 0.15), 300); }
+
+function toggleSound() {
+  State.soundOn = !State.soundOn;
+  const btn = document.getElementById('soundToggle');
+  if (btn) { btn.textContent = State.soundOn ? '🔊' : '🔇'; btn.classList.toggle('off', !State.soundOn); }
+  if (State.soundOn) sfxClick();
+}
+
+/* ============ DATA ============ */
+function loadPlayersVault() {
+  try { const raw = localStorage.getItem(PLAYERS_KEY); if (!raw) return; const arr = JSON.parse(raw); if (Array.isArray(arr)) State.players = arr.filter(p => p && p.username); } catch (e) { console.error(e); }
+}
+function savePlayersVault() {
+  try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(State.players)); } catch (e) { console.error(e); }
+}
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      username: State.auth.username, role: State.auth.role, coins: State.auth.coins,
+      history: State.history, syncHistory: State.syncHistory, evaluationHistory: State.evaluationHistory
+    }));
+  } catch (e) { console.error(e); }
+}
+function loadLocalStorageData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return;
+    const p = JSON.parse(raw); if (!p || !p.username) return;
+    State.auth.username = p.username; State.auth.role = p.role || 'MEMBER';
+    State.auth.coins = Number.isFinite(p.coins) ? p.coins : 0;
+    State.history = Array.isArray(p.history) ? p.history : [];
+    State.syncHistory = Array.isArray(p.syncHistory) ? p.syncHistory : [];
+    State.evaluationHistory = Array.isArray(p.evaluationHistory) ? p.evaluationHistory : [];
+    dismissAuthOverlay(); updateUserStatusInterface(); renderSyncSlots();
+    renderRoadmapDots(); renderAccuracyEvaluationList(); updateSyncUI();
+    writeSystemLog('Restored session: ' + p.username);
+  } catch (e) { console.error(e); }
+}
+function writeSystemLog(msg) {
+  const term = document.getElementById('systemTerminalLogs'); if (!term) return;
+  const row = document.createElement('div'); row.className = 'log-line';
+  row.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  term.appendChild(row); term.scrollTop = term.scrollHeight;
+}
+
+/* ============ AUTH & GUARD ============ */
+function getVerifiedRole() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return 'GUEST';
+    const p = JSON.parse(raw); if (!p || !p.username) return 'GUEST';
+    if (p.username === ADMIN_ACCOUNT.username && p.role === 'SUPER_ADMIN' && p.coins === ADMIN_ACCOUNT.coins) return 'SUPER_ADMIN';
+    return 'MEMBER';
+  } catch (e) { return 'GUEST'; }
+}
+function assertAdmin(actionName) {
+  if (getVerifiedRole() !== 'SUPER_ADMIN' || State.auth.role !== 'SUPER_ADMIN') {
+    sfxError(); triggerToastNotification('Truy cập bị từ chối.'); return false;
+  }
+  return true;
+}
+function dismissAuthOverlay() { const b = document.getElementById('authOverlay'); b.style.opacity = '0'; b.style.visibility = 'hidden'; b.style.pointerEvents = 'none'; }
+function updateUserStatusInterface() {
+  document.getElementById('userCoinCounter').textContent = Number(State.auth.coins||0).toLocaleString('vi-VN');
+  const badge = document.getElementById('userRoleBadge');
+  if (State.auth.role === 'SUPER_ADMIN') { badge.className = 'role-pill role-super-badge'; badge.textContent = 'ADMIN'; }
+  else if (State.auth.role === 'MEMBER') { badge.className = 'role-pill role-member-badge'; badge.textContent = 'MEMBER'; }
+  else { badge.className = 'role-pill role-member-badge'; badge.textContent = 'GUEST'; }
+}
+
+function processLoginAuthentication() {
+  const u = document.getElementById('loginUsername').value.trim();
+  const p1 = document.getElementById('loginPass1').value.trim();
+  const p2 = document.getElementById('loginPass2').value.trim();
+  const fb = document.getElementById('authFeedbackMsg'); fb.className = 'auth-msg'; fb.textContent = '';
+  const btn = document.getElementById('btnLogin');
+  
+  btn.disabled = true; btn.textContent = 'ĐANG KIỂM TRA...';
+
+  setTimeout(() => {
+    if (u === ADMIN_ACCOUNT.username && p1 === ADMIN_ACCOUNT.pass1 && p2 === ADMIN_ACCOUNT.pass2) {
+      State.auth = { username: ADMIN_ACCOUNT.username, role: 'SUPER_ADMIN', coins: ADMIN_ACCOUNT.coins };
+      fb.className = 'auth-msg success'; fb.textContent = 'Đăng nhập ADMIN thành công!';
+      persist(); sfxLogin();
+      setTimeout(() => { dismissAuthOverlay(); updateUserStatusInterface(); triggerToastNotification('⚓ Chào Admin!'); }, 400);
+      return;
+    }
+    
+    const vp = State.players.find(p => p.username === u && p.pass1 === p1 && (p.pass2||'') === (p2||''));
+    if (vp) {
+      State.auth = { username: vp.username, role: 'MEMBER', coins: vp.coins };
+      fb.className = 'auth-msg success'; fb.textContent = 'Đăng nhập thành công! ' + vp.coins + ' Xu.';
+      persist(); sfxLogin();
+      setTimeout(() => { dismissAuthOverlay(); updateUserStatusInterface(); triggerToastNotification('⚓ Chào ' + vp.username + '!'); }, 400);
+      return;
+    }
+
+    fb.className = 'auth-msg error'; fb.textContent = 'Sai tài khoản hoặc mật khẩu. Vui lòng liên hệ Admin.';
+    sfxError(); triggerToastNotification('Đăng nhập thất bại.');
+    btn.disabled = false; btn.textContent = '⚓ XÁC THỰC ⚓';
+  }, 400);
+}
+
+/* ============ INIT ============ */
+window.addEventListener('DOMContentLoaded', () => {
+  writeSystemLog('Hệ thống CHIHAOBCR v16.0 khởi chạy.');
+  loadPlayersVault(); renderSyncSlots(); renderRoadmapDots(); renderSandboxDots();
+  renderAccuracyEvaluationList(); updateUserStatusInterface(); loadLocalStorageData();
+  renderVault(); updateSyncUI();
+});
+
+/* ============ NAV ============ */
+function switchAppTab(panelId, btnElement) {
+  if (State.auth.role === 'GUEST') { sfxError(); triggerToastNotification('Vui lòng đăng nhập.'); return; }
+  if (panelId === 'adminPanel' && !assertAdmin('switchTab')) return;
+  sfxClick();
+  document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+  if (btnElement) btnElement.classList.add('active');
+  if (panelId === 'adminPanel') renderVault();
+}
+function switchAdminInnerTab(tabKey, btnElement) {
+  if (!assertAdmin('innerTab')) return;
+  sfxClick();
+  document.querySelectorAll('.admin-inner-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.admin-inner-panel').forEach(p => p.classList.remove('active'));
+  if (btnElement) btnElement.classList.add('active');
+  const panel = document.getElementById('adminInner' + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
+  if (panel) panel.classList.add('active');
+}
+
+/* ============ SYNC ============ */
+function renderSyncSlots() {
+  const c = document.getElementById('syncSlotsContainer'); if (!c) return; c.innerHTML = '';
+  for (let i = 0; i < SYNC_REQUIRED; i++) {
+    const s = document.createElement('div'); s.className = 'sync-slot';
+    const v = State.syncHistory[i];
+    if (v) { s.classList.add('filled-' + v); s.textContent = v; } else s.textContent = '·';
+    c.appendChild(s);
+  }
+}
+function updateSyncUI() {
+  const lbl = document.getElementById('syncCountLabel'); const cnt = State.syncHistory.length;
+  if (lbl) { lbl.textContent = cnt + ' / ' + SYNC_REQUIRED; lbl.classList.toggle('ready', cnt >= SYNC_REQUIRED); }
+  const btn = document.getElementById('btnRunPrediction'); if (btn) btn.disabled = cnt < SYNC_REQUIRED || State.isEngineBusy;
+  const out = document.getElementById('predictionOutputDisplay');
+  if (cnt < SYNC_REQUIRED && !State.activePrediction) {
+    out.className = 'prediction-output-text val-standby'; out.textContent = 'CHƯA ĐỒNG BỘ ĐỦ 15 CẦU';
+  }
+}
+function pushSyncSlot(symbol) {
+  if (State.auth.role === 'GUEST') { sfxError(); triggerToastNotification('Vui lòng đăng nhập.'); return; }
+  if (State.syncHistory.length >= SYNC_REQUIRED) { sfxError(); triggerToastNotification('Đủ 15 cầu rồi. RESET để nhập lại.'); return; }
+  State.syncHistory.push(symbol); sfxPop(); renderSyncSlots(); updateSyncUI(); persist();
+}
+function popSyncSlot() {
+  if (State.syncHistory.length === 0) return;
+  State.syncHistory.pop(); sfxUndo(); renderSyncSlots(); updateSyncUI(); persist();
+}
+function resetSyncBoard() {
+  if (State.auth.role === 'GUEST') { sfxError(); triggerToastNotification('Vui lòng đăng nhập.'); return; }
+  if (!confirm('Reset bàn? 15 cầu và dự đoán hiện tại sẽ bị xoá.')) return;
+  State.syncHistory = []; State.activePrediction = null; State.predictionLayers = null;
+  sfxUndo(); renderSyncSlots(); updateSyncUI(); resetPredictionDisplay(); persist();
+  writeSystemLog('Reset bàn.'); triggerToastNotification('Đã reset bàn.');
+}
+function resetPredictionDisplay() {
+  const out = document.getElementById('predictionOutputDisplay');
+  out.className = 'prediction-output-text val-standby';
+  out.textContent = State.syncHistory.length < SYNC_REQUIRED ? 'CHƯA ĐỒNG BỘ ĐỦ 15 CẦU' : 'SẴN SÀNG';
+  document.getElementById('predictionConfidenceLabel').textContent = '—';
+  document.getElementById('loadingBarFill').style.width = '0%';
+  document.getElementById('loadingPercentText').textContent = '0%';
+  for (let i = 1; i <= 9; i++) {
+    const el = document.getElementById('layer' + i + 'Value');
+    if (el) { el.className = 'layer-value none'; el.textContent = '—'; }
+    const r = document.getElementById('layer' + i + 'Reason');
+    if (r) r.textContent = '—';
+    const cardEl = el ? el.closest('.layer-card') : null;
+    if (cardEl) cardEl.classList.remove('active-now');
+  }
+}
+
+/* ============ AI ENGINE (9 TẦNG) ============ */
+function analyzeBệt(hist) {
+  try {
+    const last = hist[hist.length-1]; let streak = 1;
+    for (let i = hist.length-2; i >= 0; i--) { if (hist[i] === last) streak++; else break; }
+    return { value: streak >= 3 ? last : (last === 'P' ? 'B' : 'P'), reason: streak >= 3 ? 'Bệt '+streak : 'Đảo' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeMarkov2(hist) {
+  try {
+    if (hist.length < 5) return { value: 'P', reason: 'Thiếu' };
+    const trans = { 'PP': {P:0, B:0}, 'PB': {P:0, B:0}, 'BP': {P:0, B:0}, 'BB': {P:0, B:0} };
+    for (let i = 0; i < hist.length - 2; i++) {
+      const state = hist[i] + hist[i+1]; const next = hist[i+2];
+      if (next !== 'T' && trans[state]) trans[state][next]++;
+    }
+    const currentState = hist[hist.length-2] + hist[hist.length-1];
+    const probs = trans[currentState] || {P:0, B:0};
+    if (probs.P > probs.B) return { value: 'P', reason: `P>${probs.B}` };
+    if (probs.B > probs.P) return { value: 'B', reason: `B>${probs.P}` };
+    return { value: hist[hist.length-1] === 'P' ? 'B' : 'P', reason: 'Hòa' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeMarkov3(hist) {
+  try {
+    if (hist.length < 6) return { value: 'P', reason: 'Thiếu' };
+    const trans = {};
+    for (let i = 0; i < hist.length - 3; i++) {
+      const state = hist[i] + hist[i+1] + hist[i+2]; const next = hist[i+3];
+      if (next !== 'T') { if (!trans[state]) trans[state] = {P:0, B:0}; trans[state][next]++; }
+    }
+    const currentState = hist[hist.length-3] + hist[hist.length-2] + hist[hist.length-1];
+    const probs = trans[currentState] || {P:0, B:0};
+    if (probs.P > probs.B) return { value: 'P', reason: `M3 P` };
+    if (probs.B > probs.P) return { value: 'B', reason: `M3 B` };
+    return { value: hist[hist.length-1] === 'P' ? 'B' : 'P', reason: 'M3 Hòa' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeLSTM(hist) {
+  try {
+    let pScore = 0, bScore = 0;
+    for (let i = 0; i < hist.length; i++) {
+      const weight = Math.pow(1.15, i);
+      if (hist[i] === 'P') pScore += weight; else if (hist[i] === 'B') bScore += weight;
+    }
+    const diff = pScore - bScore;
+    if (Math.abs(diff) < (pScore + bScore) * 0.1) return { value: hist[hist.length-1] === 'P' ? 'B' : 'P', reason: 'Cân bằng' };
+    return { value: diff > 0 ? 'P' : 'B', reason: `LSTM ${diff>0?'P':'B'}` };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeMachineLearning(hist) {
+  try {
+    const n = hist.length; if (n < 6) return { value: 'P', reason: 'Thiếu' };
+    const target = hist.slice(-4).join('');
+    let pCount = 0, bCount = 0;
+    for (let i = 0; i <= n - 5; i++) {
+      if (hist.slice(i, i + 4).join('') === target) {
+        const next = hist[i+4]; if (next === 'P') pCount++; else if (next === 'B') bCount++;
+      }
+    }
+    if (pCount > bCount) return { value: 'P', reason: `M4 P` };
+    if (bCount > pCount) return { value: 'B', reason: `M4 B` };
+    return { value: hist[hist.length-1] === 'P' ? 'B' : 'P', reason: 'Không khớp' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeAntiStreak(hist) {
+  try {
+    const last = hist[hist.length-1]; let streak = 1;
+    for (let i = hist.length-2; i >= 0; i--) { if (hist[i] === last) streak++; else break; }
+    if (streak >= 4) return { value: last === 'P' ? 'B' : 'P', reason: `Gãy bệt ${streak}` };
+    return { value: last === 'P' ? 'B' : 'P', reason: 'Bẻ nhẹ' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+// 3 AI Bắt Sexy
+function analyzeBait1(hist) {
+  try {
+    // Tìm chu kỳ lặp lại đều đặn (dấu hiệu RNG can thiệp)
+    const n = hist.length;
+    if (n < 8) return { value: hist[n-1] === 'P' ? 'B' : 'P', reason: 'Bắt 1' };
+    const s = hist.slice(-8);
+    if (s[0]===s[2] && s[2]===s[4] && s[4]===s[6] && s[1]===s[3] && s[3]===s[5] && s[5]===s[7]) {
+      return { value: s[6] === 'P' ? 'B' : 'P', reason: 'Chu kỳ 2' };
+    }
+    if (s[0]===s[3] && s[3]===s[6] && s[1]===s[4] && s[4]===s[7]) {
+      return { value: s[5] === 'P' ? 'B' : 'P', reason: 'Chu kỳ 3' };
+    }
+    return { value: hist[n-1] === 'P' ? 'B' : 'P', reason: 'Bắt 1 đảo' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeBait2(hist) {
+  try {
+    // Markov bậc 4
+    const n = hist.length; if (n < 10) return { value: 'P', reason: 'Thiếu' };
+    const trans = {};
+    for (let i = 0; i < n - 4; i++) {
+      const state = hist[i] + hist[i+1] + hist[i+2] + hist[i+3]; const next = hist[i+4];
+      if (next !== 'T') { if (!trans[state]) trans[state] = {P:0, B:0}; trans[state][next]++; }
+    }
+    const currentState = hist.slice(-4).join('');
+    const probs = trans[currentState] || {P:0, B:0};
+    if (probs.P > probs.B) return { value: 'P', reason: 'M5 P' };
+    if (probs.B > probs.P) return { value: 'B', reason: 'M5 B' };
+    return { value: hist[n-1] === 'P' ? 'B' : 'P', reason: 'M5 Hòa' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+function analyzeBait3(hist) {
+  try {
+    // Chống bẫy tâm lý (đám đông nghĩ gãy nhưng nhà cái cho tiếp)
+    const n = hist.length;
+    const last = hist[n-1]; let streak = 1;
+    for (let i = n-2; i >= 0; i--) { if (hist[i] === last) streak++; else break; }
+    if (streak >= 4) {
+      // Đám đông sẽ đánh ngược -> nhà cái có thể cho tiếp
+      return { value: last, reason: `Bẫy bệt ${streak}` };
+    }
+    return { value: last === 'P' ? 'B' : 'P', reason: 'Chống bẫy' };
+  } catch(e){ return {value:'P', reason:'Lỗi'}; }
+}
+
+function combineLayers(layers) {
+  let votes = { P: 0, B: 0 };
+  // Tăng trọng số cho 3 AI Bắt Sexy
+  const weights = [1.5, 2, 3, 2, 1.5, 1.5, 2.5, 3.5, 3]; 
+  layers.forEach((l, i) => { if (l && l.value) votes[l.value] += weights[i]; });
+  
+  let best = votes.P >= votes.B ? 'P' : 'B';
+  let bestVote = best === 'P' ? votes.P : votes.B;
+  let total = votes.P + votes.B;
+  
+  let conf = total > 0 ? Math.round((bestVote / total) * 100) : 50;
+  if (conf >= 60) conf = Math.min(99, conf + 15); 
+  
+  return { value: best, confidence: conf, validCount: 9 };
+}
+
+/* ============ RUN & COMPUTE ============ */
+function runPrediction() {
+  if (State.auth.role === 'GUEST') { sfxError(); triggerToastNotification('Vui lòng đăng nhập.'); return; }
+  if (State.syncHistory.length < SYNC_REQUIRED) { sfxError(); triggerToastNotification('Cần đủ 15 cầu.'); return; }
+  if (State.isEngineBusy) return;
+  if (State.auth.role === 'MEMBER' && State.auth.coins < ROUND_COST) { sfxError(); triggerToastNotification('Hết Xu!'); return; }
+
+  State.isEngineBusy = true; sfxClick();
+  const btn = document.getElementById('btnRunPrediction'); if (btn) btn.disabled = true;
+  setInputButtonsDisabled(true);
+  const barFill = document.getElementById('loadingBarFill');
+  const percentLbl = document.getElementById('loadingPercentText');
+  const out = document.getElementById('predictionOutputDisplay');
+  out.className = 'prediction-output-text val-standby'; out.textContent = 'ĐANG PHÂN TÍCH 9 TẦNG...';
+  document.getElementById('predictionConfidenceLabel').textContent = '—';
+  barFill.style.width = '0%'; percentLbl.textContent = '0%';
+
+  const hist = State.syncHistory.slice();
+  let start = null; const duration = 2000;
+  function step(ts) {
+    if (!start) start = ts;
+    const ratio = Math.min((ts - start) / duration, 1);
+    const pct = Math.floor(ratio * 100);
+    barFill.style.width = pct + '%'; percentLbl.textContent = pct + '%';
+    if (ratio < 1) {
+      requestAnimationFrame(step);
+    } else {
+      try { computePrediction(hist); } catch(e) { triggerToastNotification('Lỗi AI: ' + e.message); }
+      State.isEngineBusy = false; setInputButtonsDisabled(false); if (btn) btn.disabled = false;
+      if (State.auth.role === 'MEMBER') {
+        State.auth.coins -= ROUND_COST; updateUserStatusInterface(); syncPlayerCoinsToVault(); persist();
+      }
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+function computePrediction(hist) {
+  const layers = [ 
+    analyzeBệt(hist), analyzeMarkov2(hist), analyzeMarkov3(hist), 
+    analyzeLSTM(hist), analyzeMachineLearning(hist), analyzeAntiStreak(hist),
+    analyzeBait1(hist), analyzeBait2(hist), analyzeBait3(hist)
+  ];
+  const result = combineLayers(layers);
+  State.activePrediction = result.value;
+  State.predictionLayers = { layers, confidence: result.confidence };
+
+  for (let i = 0; i < 9; i++) {
+    const valEl = document.getElementById('layer' + (i+1) + 'Value');
+    const reasonEl = document.getElementById('layer' + (i+1) + 'Reason');
+    const cardEl = valEl ? valEl.closest('.layer-card') : null;
+    if (layers[i] && layers[i].value) {
+      valEl.className = 'layer-value ' + layers[i].value; valEl.textContent = layers[i].value;
+      if (cardEl) cardEl.classList.add('active-now');
+    }
+    if (reasonEl) reasonEl.textContent = layers[i].reason || '—';
+  }
+
+  const out = document.getElementById('predictionOutputDisplay');
+  if (result.value === 'P') { out.className = 'prediction-output-text val-player'; out.textContent = 'PLAYER'; }
+  else { out.className = 'prediction-output-text val-banker'; out.textContent = 'BANKER'; }
+
+  document.getElementById('predictionConfidenceLabel').textContent = '⚔ ĐỘ TIN CẬY: ' + result.confidence + '%';
+  writeSystemLog('Predict: ' + result.value + ' (' + result.confidence + '%)'); sfxPrediction();
+  triggerToastNotification('AI: ' + (result.value === 'P' ? 'PLAYER' : 'BANKER') + ' — ' + result.confidence + '%');
+}
+
+/* ============ RESULT ============ */
+function setInputButtonsDisabled(d) { document.querySelectorAll('#gamePanel .btn-input-move').forEach(b => { b.disabled = d; }); }
+function registerRoundResult(symbol) {
+  if (State.auth.role === 'GUEST') { sfxError(); triggerToastNotification('Vui lòng đăng nhập.'); return; }
+  if (State.isEngineBusy) return;
+  if (State.syncHistory.length < SYNC_REQUIRED) { sfxError(); triggerToastNotification('Cần đủ 15 cầu.'); return; }
+
+  if (State.activePrediction && symbol !== 'T') {
+    const isCorrect = State.activePrediction === symbol;
+    State.evaluationHistory.unshift({ roundIndex: State.syncHistory.length, predicted: State.activePrediction, actual: symbol, confidence: State.predictionLayers ? State.predictionLayers.confidence : 0, isCorrect });
+    if (State.evaluationHistory.length > 200) State.evaluationHistory.pop();
+    renderAccuracyEvaluationList();
+    if (isCorrect) sfxWin(); else sfxLose();
+  } else { sfxPop(); }
+
+  State.syncHistory.push(symbol);
+  if (State.syncHistory.length > SYNC_REQUIRED) State.syncHistory.shift();
+  renderSyncSlots(); updateSyncUI();
+  State.activePrediction = null; State.predictionLayers = null; resetPredictionDisplay();
+  persist(); writeSystemLog('Result: ' + symbol);
+}
+function syncPlayerCoinsToVault() {
+  if (State.auth.role !== 'MEMBER') return;
+  const p = State.players.find(x => x.username === State.auth.username);
+  if (p) { p.coins = State.auth.coins; savePlayersVault(); renderVault(); }
+}
+
+/* ============ RENDER ============ */
+function renderRoadmapDots() {
+  const c = document.getElementById('roadmapBallsContainer'); if (!c) return; c.innerHTML = '';
+  State.syncHistory.slice(-25).forEach(item => { const d = document.createElement('div'); d.className = 'road-ball ball-' + item; d.textContent = item; c.appendChild(d); });
+  c.scrollLeft = c.scrollWidth;
+}
+function renderSandboxDots() {
+  const c = document.getElementById('sandboxBallsContainer'); if (!c) return; c.innerHTML = '';
+  State.sandboxHistory.slice(-25).forEach(item => { const d = document.createElement('div'); d.className = 'road-ball ball-' + item; d.textContent = item; c.appendChild(d); });
+  c.scrollLeft = c.scrollWidth;
+}
+function renderAccuracyEvaluationList() {
+  const list = document.getElementById('accuracyHistoryListContainer'); if (!list) return; list.innerHTML = '';
+  let wins = 0, losses = 0;
+  State.evaluationHistory.forEach(r => {
+    if (r.isCorrect) wins++; else losses++;
+    const row = document.createElement('div'); row.className = 'history-row-item';
+    const tag = document.createElement('span'); tag.className = 'history-round-tag'; tag.textContent = '#' + r.roundIndex;
+    const info = document.createElement('span'); info.className = 'history-info-detail'; info.textContent = 'AI ' + (r.predicted==='P'?'P':'B') + ' | RA ' + r.actual;
+    const v = document.createElement('span'); v.className = 'history-verdict-badge ' + (r.isCorrect ? 'verdict-correct' : 'verdict-incorrect'); v.textContent = r.isCorrect ? 'ĐÚNG' : 'SAI';
+    row.appendChild(tag); row.appendChild(info); row.appendChild(v); list.appendChild(row);
+  });
+  const total = wins + losses; const pct = total > 0 ? Math.round((wins/total)*100) : 0;
+  document.getElementById('statWinsCount').textContent = wins; document.getElementById('statLossesCount').textContent = losses; document.getElementById('statAccuracyRate').textContent = pct + '%';
+}
+
+/* ============ SANDBOX ============ */
+function sandboxRound(symbol) {
+  if (!assertAdmin('sandboxRound')) return;
+  if (State.sandboxBusy) return;
+  sfxPop(); State.sandboxHistory.push(symbol); if (State.sandboxHistory.length > 500) State.sandboxHistory.shift();
+  renderSandboxDots(); runSandboxLoading();
+}
+function runSandboxLoading() {
+  State.sandboxBusy = true; const out = document.getElementById('sandboxOutputDisplay');
+  out.className = 'prediction-output-text val-standby'; out.textContent = 'ĐANG TÍNH...';
+  setTimeout(() => {
+    State.sandboxBusy = false; const hist = State.sandboxHistory;
+    const layers = [analyzeBệt(hist), analyzeMarkov2(hist), analyzeMarkov3(hist), analyzeLSTM(hist), analyzeMachineLearning(hist), analyzeAntiStreak(hist), analyzeBait1(hist), analyzeBait2(hist), analyzeBait3(hist)];
+    const r = combineLayers(layers);
+    if (r.value === 'P') { out.className = 'prediction-output-text val-player'; out.textContent = 'PLAYER ' + r.confidence + '%'; }
+    else { out.className = 'prediction-output-text val-banker'; out.textContent = 'BANKER ' + r.confidence + '%'; }
+    sfxPrediction();
+  }, 1000);
+}
+function sandboxReset() {
+  if (!assertAdmin('sandboxReset')) return;
+  State.sandboxHistory = ['P','B','P','B','P','B']; renderSandboxDots();
+  const out = document.getElementById('sandboxOutputDisplay');
+  out.className = 'prediction-output-text val-standby'; out.textContent = 'BẤM ĐỂ TEST';
+  sfxUndo(); triggerToastNotification('Đã reset sandbox.');
+}
+
+/* ============ VAULT ============ */
+function renderVault() {
+  const list = document.getElementById('vaultAccountList'); const badge = document.getElementById('vaultCountBadge'); if (!list) return;
+  if (getVerifiedRole() !== 'SUPER_ADMIN') { list.innerHTML = '<div class="vault-empty">Không có quyền.</div>'; if (badge) badge.textContent = '(?)'; return; }
+  list.innerHTML = ''; if (badge) badge.textContent = '(' + State.players.length + ')';
+  if (State.players.length === 0) { list.innerHTML = '<div class="vault-empty">Chưa có tài khoản.</div>'; return; }
+  State.players.forEach(p => {
+    const card = document.createElement('div'); card.className = 'vault-account-card';
+    card.innerHTML = '<div class="vault-account-top"><div class="vault-account-name">' + p.username + '</div></div><div class="vault-account-meta">Xu: <b>' + Number(p.coins||0).toLocaleString('vi-VN') + '</b></div>';
+    const actions = document.createElement('div'); actions.className = 'vault-account-actions';
+    const db = document.createElement('button'); db.className = 'vault-mini-btn gold'; db.textContent = '+ XU'; db.onclick = () => vaultDepositCoins(p.username);
+    const xb = document.createElement('button'); xb.className = 'vault-mini-btn danger'; xb.textContent = 'XÓA'; xb.onclick = () => vaultDeleteAccount(p.username);
+    actions.appendChild(db); actions.appendChild(xb); card.appendChild(actions); list.appendChild(card);
+  });
+}
+function vaultCreateAccount() {
+  if (!assertAdmin('vaultCreate')) return;
+  const u = document.getElementById('vaultNewUsername').value.trim();
+  const p1 = document.getElementById('vaultNewPass1').value.trim();
+  const p2 = document.getElementById('vaultNewPass2').value.trim();
+  const cRaw = parseInt(document.getElementById('vaultNewCoins').value, 10);
+  if (u.length < 3) { sfxError(); triggerToastNotification('Username ≥ 3 ký tự.'); return; }
+  if (p1.length < 3) { sfxError(); triggerToastNotification('Pass ≥ 3 ký tự.'); return; }
+  if (u === ADMIN_ACCOUNT.username || State.players.some(p => p.username === u)) { sfxError(); triggerToastNotification('Username đã tồn tại.'); return; }
+  const coins = Number.isFinite(cRaw) && cRaw >= 0 ? cRaw : DEFAULT_MEMBER_COINS;
+  State.players.push({ username: u, pass1: p1, pass2: p2, coins, createdAt: Date.now() });
+  savePlayersVault(); renderVault(); writeSystemLog('ADMIN tạo: ' + u); sfxWin(); triggerToastNotification('Đã tạo ' + u);
+  document.getElementById('vaultNewUsername').value = ''; document.getElementById('vaultNewPass1').value = ''; document.getElementById('vaultNewPass2').value = ''; document.getElementById('vaultNewCoins').value = '200';
+}
+function vaultDepositCoins(username) {
+  if (!assertAdmin('vaultDeposit')) return;
+  const s = prompt('Nạp bao nhiêu xu cho ' + username + '?', '200'); if (s === null) return;
+  const amt = parseInt(s, 10); if (!Number.isFinite(amt) || amt <= 0) { sfxError(); triggerToastNotification('Số không hợp lệ.'); return; }
+  const p = State.players.find(x => x.username === username); if (!p) { sfxError(); triggerToastNotification('Không tìm thấy.'); return; }
+  p.coins = (p.coins||0) + amt; savePlayersVault(); renderVault(); writeSystemLog('ADMIN nạp ' + amt + ' xu cho ' + username);
+  sfxWin(); triggerToastNotification('Đã nạp ' + amt + ' xu.');
+  if (State.auth.username === username) { State.auth.coins = p.coins; updateUserStatusInterface(); persist(); }
+}
+function vaultDeleteAccount(username) {
+  if (!assertAdmin('vaultDelete')) return;
+  if (!confirm('Xoá "' + username + '"?')) return;
+  State.players = State.players.filter(p => p.username !== username); savePlayersVault(); renderVault();
+  writeSystemLog('ADMIN xoá: ' + username); sfxLose(); triggerToastNotification('Đã xoá ' + username);
+}
+
+/* ============ ADMIN SYSTEM ============ */
+function adminExecuteDepositCoins() {
+  if (!assertAdmin('adminDeposit')) return;
+  const input = document.getElementById('adminDepositAmount'); const v = parseInt(input.value, 10);
+  if (!Number.isFinite(v) || v <= 0) { sfxError(); triggerToastNotification('Số không hợp lệ.'); return; }
+  State.auth.coins += v; updateUserStatusInterface(); persist(); writeSystemLog('Admin tự nạp ' + v);
+  sfxWin(); triggerToastNotification('Đã nạp ' + v + ' Xu 🪙'); input.value = '';
+}
+function adminResetRoadmapData() {
+  if (!assertAdmin('adminReset')) return;
+  if (!confirm('Reset cầu chính?')) return;
+  State.syncHistory = []; State.evaluationHistory = []; State.activePrediction = null; State.predictionLayers = null;
+  renderSyncSlots(); renderRoadmapDots(); renderAccuracyEvaluationList(); updateSyncUI(); resetPredictionDisplay(); persist();
+  writeSystemLog('Admin reset cầu.'); sfxUndo(); triggerToastNotification('Đã reset.');
+}
+
+/* ============ TOAST ============ */
+let toastTimer = null;
+function triggerToastNotification(msg) {
+  const t = document.getElementById('appToastPopup'); t.textContent = msg; t.classList.add('active');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('active'), 2600);
+}
+</script>
+</body>
+</html>
